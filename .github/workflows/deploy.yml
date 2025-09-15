@@ -1,0 +1,41 @@
+name: Deploy VitePress to GitHub Pages
+
+on:
+  push:
+    branches:
+      - main # mainブランチにプッシュされたときに実行
+
+permissions:
+  contents: write # ワークフローからリポジトリに書き込む権限
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      # 1. リポジトリのソースコードをチェックアウト
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # Gitの履歴をすべて取得（最終更新日の表示などに必要）
+
+      # 2. Node.js環境をセットアップ
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20' # 使用するNode.jsのバージョンを指定
+          cache: 'npm'       # npmのキャッシュを有効化
+
+      # 3. 依存パッケージのインストールとビルド
+      - name: Install and Build
+        run: |
+          npm ci
+          npm run docs:build # package.jsonのビルドスクリプトを実行
+
+      # 4. GitHub Pagesへデプロイ
+      - name: Deploy to GitHub Pages
+        uses: crazy-max/ghaction-github-pages@v4
+        with:
+          target_branch: gh-pages # デプロイ先のブランチ名
+          build_dir: docs/.vitepress/dist # ビルド成果物が格納されているディレクトリ
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
